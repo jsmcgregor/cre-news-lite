@@ -12,7 +12,6 @@
     "copy-files": "copy .\\out\\.* .\\out\\ /Y"
   },
   "dependencies": {
-    "@tailwindcss/postcss": "^4.1.8",
     "bottleneck": "^2.19.5",
     "cheerio": "^1.0.0",
     "next": "15.3.1",
@@ -25,15 +24,15 @@
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.1",
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "autoprefixer": "^10.4.16",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
-    "postcss": "^8.4.32",
-    "tailwindcss": "^3.3.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }

@@ -4,7 +4,7 @@
  */
 
 // Get environment variables with fallbacks, ensuring defaults work correctly
-const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+const USE_MOCK_DATA = process.env.USE_MOCK_DATA === 'true' || true; // Set to true for static export
 
 // Only use Redis if specifically enabled - better default for dev environments
 const USE_REDIS = process.env.USE_REDIS === 'true';

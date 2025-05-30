@@ -23,7 +23,12 @@ const nextConfig = {
     domains: ['bisnow.com', 'globest.com'],
     formats: ['image/webp'],
     minimumCacheTTL: 60,
-    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
   
   // Enable compression
@@ -44,11 +49,11 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   
-  // Enable static exports for GitHub Pages
+  // Enable static export
   output: 'export',
   
-  // Base path for GitHub Pages (update this with your repository name when deploying)
-  // basePath: '/cre-news-lite',
+  // Trailingslash for better compatibility
+  trailingSlash: true,
 };
 
 module.exports = nextConfig;

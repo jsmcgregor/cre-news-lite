@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+
+// Configure this route for static export
+export const dynamic = 'force-static';
+// This will make the route work with static export
 import { Article } from '../../../../types/article';
 import { mockArticles } from '../../../mocks/articles';
 import { getAllArticles } from '../../../utils/scrapers';
