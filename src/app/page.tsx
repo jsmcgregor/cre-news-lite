@@ -38,12 +38,14 @@ export default function Home() {
         source: selectedSource || undefined 
       });
       
-      // Use the enhanced function that returns pagination data
+      // For static exports, we need to use mock data
+      // This ensures articles appear on Netlify and GitHub Pages
       const response = await getArticlesWithPagination({
         page: currentPage,
         pageSize,
         region: selectedRegion,
-        source: selectedSource || undefined
+        source: selectedSource || undefined,
+        useMockData: true // Force using mock data for static exports
       });
       
       console.log('Page: Got articles response:', response);

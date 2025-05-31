@@ -5,6 +5,7 @@ export type ArticleParams = {
   pageSize?: number;
   region?: string;
   source?: string;
+  useMockData?: boolean;
 };
 
 export type ArticleResponse = {
