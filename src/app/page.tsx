@@ -31,11 +31,16 @@ export default function Home() {
     setErrorMessage('');
     
     try {
+      // Check if we're in a static export environment
+      const isStaticExport = typeof window !== 'undefined' && window.location.protocol === 'file:' || 
+                             process.env.NODE_ENV === 'production';
+      
       console.log('Page: Fetching articles with params:', { 
         page: currentPage, 
         pageSize,
         region: selectedRegion,
-        source: selectedSource || undefined 
+        source: selectedSource || undefined,
+        isStaticExport
       });
       
       // For static exports, we need to use mock data
@@ -45,7 +50,7 @@ export default function Home() {
         pageSize,
         region: selectedRegion,
         source: selectedSource || undefined,
-        useMockData: true // Force using mock data for static exports
+        useMockData: true // Always use mock data for static exports
       });
       
       console.log('Page: Got articles response:', response);

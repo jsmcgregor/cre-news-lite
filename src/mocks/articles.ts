@@ -1,12 +1,14 @@
 import { Article } from '../../types/article';
 
-// Function to generate dates in the past few days
-const getRandomDate = () => {
-  const days = Math.floor(Math.random() * 14); // Random number of days from 0-14
-  const date = new Date();
-  date.setDate(date.getDate() - days);
-  return date.toLocaleDateString();
+// Function to generate fixed dates for static exports
+const getFixedDate = (dayOffset = 0) => {
+  const baseDate = new Date('2025-05-15');
+  baseDate.setDate(baseDate.getDate() - dayOffset);
+  return baseDate.toLocaleDateString();
 };
+
+// Use fixed dates for static exports to ensure consistency
+const getRandomDate = () => getFixedDate(Math.floor(Math.random() * 14));
 
 // Mock data with various articles for different regions
 export const mockArticles: Article[] = [

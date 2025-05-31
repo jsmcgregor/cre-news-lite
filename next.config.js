@@ -11,6 +11,23 @@ const nextConfig = {
           { key: 'Access-Control-Allow-Headers', value: 'X-Requested-With, Content-Type, Authorization' },
         ],
       },
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+        ],
+      },
     ];
   },
   
@@ -37,6 +54,7 @@ const nextConfig = {
   // Environment variables that will be available at build time
   env: {
     NEXT_PUBLIC_APP_VERSION: '1.0.0',
+    USE_MOCK_DATA: 'true', // Force using mock data for static exports
   },
   
   // Disable ESLint during build
