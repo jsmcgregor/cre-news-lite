@@ -4,7 +4,9 @@
  */
 
 // Get environment variables with fallbacks, ensuring defaults work correctly
-const USE_MOCK_DATA = process.env.USE_MOCK_DATA === 'true' || false; // Set to false to use real data
+// IMPORTANT: Default must be false to use real data in development
+// Force USE_MOCK_DATA to be false to ensure real data is used
+const USE_MOCK_DATA = false;
 
 // Only use Redis if specifically enabled - better default for dev environments
 const USE_REDIS = process.env.USE_REDIS === 'true';
@@ -13,7 +15,13 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 // Cache duration and other settings
 // Setting a very short cache duration to ensure fresh data
 const SCRAPE_CACHE_DURATION_MINUTES = Number(process.env.SCRAPE_CACHE_DURATION_MINUTES || '1');
-const ENABLE_SOURCES = (process.env.ENABLE_SOURCES || 'bisnow,globest').split(',');
+// Always ensure bisnow is included in enabled sources
+const envSources = process.env.ENABLE_SOURCES || 'bisnow,globest,connectcre';
+const ENABLE_SOURCES = envSources.split(',');
+// Make sure bisnow is always included
+if (!ENABLE_SOURCES.includes('bisnow')) {
+  ENABLE_SOURCES.push('bisnow');
+}
 const RATE_LIMIT_DEFAULT = Number(process.env.RATE_LIMIT_DEFAULT || '10');
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 

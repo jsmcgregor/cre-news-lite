@@ -26,15 +26,25 @@ export async function getArticlesWithPagination(params: ArticleParams = {}): Pro
     if (params.useMockData) {
         console.log('Using mock data for static export');
         
-        // Filter mock articles based on region and source
+        // Filter mock articles based on region, source, and search term
         let filteredArticles = [...mockArticles];
         
+        // Filter by region if specified
         if (params.region && params.region !== 'All') {
+            console.log(`Filtering by region: ${params.region}`);
             filteredArticles = filteredArticles.filter(article => article.region === params.region);
+            console.log(`Found ${filteredArticles.length} articles for region: ${params.region}`);
         }
         
         if (params.source) {
             filteredArticles = filteredArticles.filter(article => article.source === params.source);
+        }
+        
+        if (params.searchTerm) {
+            const searchTermLower = params.searchTerm.toLowerCase();
+            filteredArticles = filteredArticles.filter(article => 
+                article.title.toLowerCase().includes(searchTermLower)
+            );
         }
         
         // Calculate pagination

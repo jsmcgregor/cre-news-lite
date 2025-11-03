@@ -1,24 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CRE News Lite
 
-## Getting Started
+A commercial real estate news aggregator that scrapes articles from various sources including Bisnow and GlobeSt.
 
-First, run the development server:
+## Quick Start
+
+The easiest way to start the application is to use the included batch file:
+
+1. Double-click on `start-app.bat` in the project root directory
+2. Wait for the server to start (you'll see "Ready" in the console)
+3. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+## Features
+
+- Real-time scraping of commercial real estate news from multiple sources
+- Article filtering by region and source
+- Pagination for browsing large sets of articles
+- Responsive design for desktop and mobile viewing
+
+## Manual Setup
+
+If you prefer to start the application manually:
 
 ```bash
+# Navigate to the project directory
+cd C:\Users\sterl\CascadeProjects\cre-news-lite
+
+# Install dependencies (only needed once or when dependencies change)
+npm install
+
+# Start the development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Configuration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The application is configured to use real data from scrapers by default. This configuration is set in `src/config.ts`.
+
+Key configuration options:
+- `USE_MOCK_DATA`: Set to `false` to use real scraped data
+- `ENABLE_SOURCES`: List of enabled scraper sources
+- `CACHE_DURATION`: How long to cache scraped articles
 
 ## Learn More
 

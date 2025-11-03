@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Article, Region } from '../../types/article';
+import { Article, Region } from '../types/article';
 import ArticleCard from '../components/ArticleCard';
 import SimplifiedRegionSelector from '../components/SimplifiedRegionSelector';
 import { getArticlesWithPagination } from '../utils/scraper';
 import Layout from '../components/Layout';
+import CommentFeed from '../components/CommentFeed';
+import { MarketRatesWidget } from '../components/MarketRatesWidget';
+import { CREMarketDashboard } from '../components/CREMarketDashboard';
 
 const ARTICLES_PER_PAGE = 12; // Show 12 articles per page
 
@@ -21,8 +24,9 @@ export default function Home() {
   const [pageSize] = useState(ARTICLES_PER_PAGE);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [selectedRegion, setSelectedRegion] = useState<Region>('National');
+  const [selectedRegion, setSelectedRegion] = useState<Region>('All');
   const [selectedSource, setSelectedSource] = useState<string>('');
+  // Search functionality removed for simplicity
 
   // Load articles with pagination and filters
   const loadArticles = useCallback(async () => {
@@ -31,26 +35,30 @@ export default function Home() {
     setErrorMessage('');
     
     try {
-      // Check if we're in a static export environment
-      const isStaticExport = typeof window !== 'undefined' && window.location.protocol === 'file:' || 
-                             process.env.NODE_ENV === 'production';
+      // Use real scraped data from the API
+      // This will fetch actual articles from the sources
+      const useMockData = false;
+      
+      const currentRegion = selectedRegion;
+      const currentSource = selectedSource;
+      const currentPageValue = currentPage;
+      const currentPageSizeValue = pageSize;
       
       console.log('Page: Fetching articles with params:', { 
-        page: currentPage, 
-        pageSize,
-        region: selectedRegion,
-        source: selectedSource || undefined,
-        isStaticExport
+        page: currentPageValue, 
+        pageSize: currentPageSizeValue,
+        region: currentRegion,
+        source: currentSource || undefined,
+        useMockData
       });
       
-      // For static exports, we need to use mock data
-      // This ensures articles appear on Netlify and GitHub Pages
+      // Always use mock data to ensure articles appear without backend API
       const response = await getArticlesWithPagination({
-        page: currentPage,
-        pageSize,
-        region: selectedRegion,
-        source: selectedSource || undefined,
-        useMockData: true // Always use mock data for static exports
+        page: currentPageValue,
+        pageSize: currentPageSizeValue,
+        region: currentRegion,
+        source: currentSource || undefined,
+        useMockData: useMockData // Always use mock data
       });
       
       console.log('Page: Got articles response:', response);
@@ -59,7 +67,7 @@ export default function Home() {
       setTotalItems(response.total);
       
       // Adjust current page if it's beyond the available pages
-      if (currentPage > response.totalPages && response.totalPages > 0) {
+      if (currentPageValue > response.totalPages && response.totalPages > 0) {
         setCurrentPage(response.totalPages);
       }
     } catch (error) {
@@ -71,15 +79,16 @@ export default function Home() {
       console.log('Page: Finished loading');
       setIsLoading(false);
     }
-  }, [currentPage, pageSize, selectedRegion, selectedSource]);
+  }, [currentPage, selectedRegion, selectedSource, pageSize]);
 
   // Load articles when component mounts or dependencies change
   useEffect(() => {
     loadArticles();
-  }, [loadArticles, currentPage, selectedRegion, selectedSource]);
+  }, [loadArticles]);
   
   // Handle region change
   const handleRegionChange = (region: Region) => {
+    console.log(`Changing region filter to: ${region}`);
     setSelectedRegion(region);
     setCurrentPage(1); // Reset to first page when changing region
   };
@@ -175,9 +184,12 @@ export default function Home() {
               <p className="text-gray-400">There are currently no articles matching your filter criteria.</p>
               <button 
                 className="mt-6 px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors"
-                onClick={() => handleRegionChange('National')}
+                onClick={() => {
+                  setCurrentPage(1);
+                  loadArticles();
+                }}
               >
-                View National Articles
+                Reset Filters
               </button>
             </div>
           </div>
@@ -220,71 +232,62 @@ export default function Home() {
                   <option value="">All Sources</option>
                   <option value="bisnow">Bisnow</option>
                   <option value="globest">GlobeSt</option>
+                  <option value="connectcre">ConnectCRE</option>
                 </select>
               </div>
             </div>
             
-            {/* Search Box */}
-            <div className="w-full sm:w-64 lg:w-72">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <svg className="w-4 h-4 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
-                  </svg>
-                </div>
-                <input 
-                  type="search" 
-                  className="block w-full p-2.5 pl-10 text-sm border rounded-lg bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-cyan-500 focus:border-cyan-500" 
-                  placeholder="Search articles..."
-                  // In a real app, this would trigger a search API call
-                />
-              </div>
-            </div>
+            {/* Search Box Removed */}
           </div>
           
           {/* Results Summary */}
-          <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
+          <div className="mt-4 pt-4 border-t border-gray-700">
             <div className="text-sm text-gray-400">
               Showing {articles.length} of {totalItems} articles
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-400">Sort by:</span>
-              <select 
-                className="bg-gray-700 border border-gray-600 text-gray-300 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block p-2"
-                // In a real app, this would change the sort order
-              >
-                <option value="date">Newest First</option>
-                <option value="source">Source</option>
-                <option value="region">Region</option>
-              </select>
             </div>
           </div>
         </div>
         
-        {/* Articles by Region */}
-        <div className="space-y-10">
-          {sortedRegions.map((region) => {
-            const regionArticles = articlesByRegion[region];
-            if (!regionArticles?.length) return null;
-            
-            return (
-              <section key={region} className="bg-gray-800 rounded-lg shadow-md border border-gray-700 p-6 mb-8">
-                <h2 className="text-2xl font-semibold mb-6 text-gray-200 flex items-center">
-                  <span 
-                    className="inline-block w-3 h-3 rounded-full bg-cyan-500 mr-3"
-                    aria-hidden="true"
-                  ></span>
-                  {region}
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {regionArticles.map((article) => (
-                    <ArticleCard key={article.url} article={article} />
-                  ))}
-                </div>
-              </section>
-            );
-          })}
+        {/* Main content area with sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
+          {/* Main content - Articles by Region */}
+          <div className="lg:col-span-5 space-y-10">
+            {sortedRegions.map((region) => {
+              const regionArticles = articlesByRegion[region];
+              if (!regionArticles?.length) return null;
+              
+              return (
+                <section key={region} className="bg-gray-800 rounded-lg shadow-md border border-gray-700 p-6 mb-8">
+                  <h2 className="text-2xl font-semibold mb-6 text-gray-200 flex items-center">
+                    <span 
+                      className="inline-block w-3 h-3 rounded-full bg-cyan-500 mr-3"
+                      aria-hidden="true"
+                    ></span>
+                    {region}
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                    {regionArticles.map((article) => (
+                      <ArticleCard key={article.url} article={article} />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+          
+          {/* Sidebar - Market Rates and Comment Feed */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-4 space-y-6">
+              {/* CRE Market Dashboard */}
+              <CREMarketDashboard />
+              
+              {/* Market Rates Widget */}
+              <MarketRatesWidget />
+              
+              {/* Comment Feed */}
+              <CommentFeed />
+            </div>
+          </div>
         </div>
 
         {/* Pagination Controls */}
@@ -317,6 +320,12 @@ export default function Home() {
             </button>
           </div>
         )}
+        
+        {/* Creator Information Footer */}
+        <footer className="mt-12 mb-6 text-center text-gray-400 border-t border-gray-800 pt-6">
+          <p>Created by Sterling McGregor</p>
+          <p className="text-sm mt-1">Contact <a href="mailto:sterling.mcgregor@gmail.com" className="text-cyan-400 hover:text-cyan-300 transition-colors">sterling.mcgregor@gmail.com</a> for more information</p>
+        </footer>
         
     </Layout>
   );

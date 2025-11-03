@@ -626,6 +626,7 @@ export class EnhancedConnectCREScraper extends BaseScraper {
   
   /**
    * Scrape articles from all ConnectCRE regional sites
+   * Filters articles to only include those from the last 2 weeks
    */
   protected async scrapeSource(): Promise<Article[]> {
     try {
@@ -720,14 +721,44 @@ export class EnhancedConnectCREScraper extends BaseScraper {
         return this.getSampleArticles();
       }
       
+      // Filter articles to only include those from the last 2 weeks
+      const twoWeeksAgo = new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+      
+      const filteredArticles = allArticles.filter(article => {
+        // Parse the published date
+        try {
+          const publishedDate = new Date(article.publishedDate);
+          // Only include articles from the last 2 weeks
+          return publishedDate >= twoWeeksAgo;
+        } catch (error) {
+          // If we can't parse the date, include the article anyway
+          logger.warn({
+            event: 'date_parsing_error',
+            site: this.name,
+            date: article.publishedDate,
+            error: error instanceof Error ? error.message : String(error)
+          });
+          return true;
+        }
+      });
+      
+      logger.info({
+        event: 'filtered_articles_by_date',
+        site: this.name,
+        total: allArticles.length,
+        filtered: filteredArticles.length,
+        dateThreshold: twoWeeksAgo.toISOString()
+      });
+      
       // Sort articles by date (newest first)
-      allArticles.sort((a, b) => {
+      filteredArticles.sort((a, b) => {
         const dateA = new Date(a.publishedDate);
         const dateB = new Date(b.publishedDate);
         return dateB.getTime() - dateA.getTime();
       });
       
-      return allArticles;
+      return filteredArticles;
     } catch (error) {
       logger.error({
         event: 'scraping_failed',

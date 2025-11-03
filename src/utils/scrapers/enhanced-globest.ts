@@ -15,7 +15,7 @@ export class EnhancedGlobeStScraper extends BaseScraper {
   public readonly baseUrl = 'https://www.globest.com';
   
   // Regional URLs to scrape
-  private readonly regionalUrls = {
+  private readonly regionalUrls: Record<string, string> = {
     'National': 'https://www.globest.com/markets/national/',
     'West': 'https://www.globest.com/markets/west/',
     'Southwest': 'https://www.globest.com/markets/southwest/',
@@ -49,6 +49,15 @@ export class EnhancedGlobeStScraper extends BaseScraper {
     { pattern: '/miami/', region: 'South' as Region },
     { pattern: '/orlando/', region: 'South' as Region },
     { pattern: '/charlotte/', region: 'South' as Region }
+  ];
+
+  // Sample article URLs for fallback
+  private readonly sampleArticleUrls = [
+    'https://www.globest.com/2025/07/01/office-market-recovery-continues-in-q2/',
+    'https://www.globest.com/2025/07/02/multifamily-investment-volume-rebounds-in-first-half-of-2025/',
+    'https://www.globest.com/2025/07/03/industrial-sector-remains-resilient-amid-economic-uncertainty/',
+    'https://www.globest.com/2025/07/04/retail-sector-shows-signs-of-stabilization-in-mid-2025/',
+    'https://www.globest.com/2025/07/05/cre-lending-environment-improves-as-rates-stabilize/'
   ];
   
   /**
@@ -160,6 +169,22 @@ export class EnhancedGlobeStScraper extends BaseScraper {
     
     return 'Unknown';
   }
+
+  /**
+   * Get a path to an element in the DOM
+   * @param $ The cheerio instance
+   * @param element The element to get a path for
+   * @returns A string representing the path to the element
+   */
+  private getElementPath($: cheerio.CheerioAPI, element: cheerio.Element): string {
+    if (!element) return '';
+    
+    const tagName = element.tagName || '';
+    const id = $(element).attr('id') ? `#${$(element).attr('id')}` : '';
+    const classes = $(element).attr('class') ? `.${$(element).attr('class')?.replace(/\s+/g, '.')}` : '';
+    
+    return `${tagName}${id}${classes}`;
+  }
   
   /**
    * Scrape a specific URL for articles
@@ -253,6 +278,8 @@ export class EnhancedGlobeStScraper extends BaseScraper {
             // Try up to 3 levels up
             for (let i = 0; i < 3 && !found; i++) {
               current = current.parent();
+              if (current.length === 0) break;
+              
               const path = this.getElementPath($, current[0]);
               
               if (prettyDates.has(path)) {
@@ -271,17 +298,16 @@ export class EnhancedGlobeStScraper extends BaseScraper {
                   found = true;
                   return false;
                 }
+                return true;
               });
             }
           }
           
-          // Create article object
           // If date is Unknown, try to extract it from the URL as a fallback
           let finalPublishedDate = publishedDate;
           if (finalPublishedDate === 'Unknown') {
             finalPublishedDate = this.extractDateFromUrl(articleUrl);
           }
-          console.log(`GlobeSt creating article with date: "${finalPublishedDate}" for title: "${title}"`);
           
           const article: Article = {
             title,
@@ -340,6 +366,8 @@ export class EnhancedGlobeStScraper extends BaseScraper {
                   // Try up to 3 levels up
                   for (let i = 0; i < 3 && !found; i++) {
                     current = current.parent();
+                    if (current.length === 0) break;
+                    
                     const path = this.getElementPath($, current[0]);
                     
                     if (prettyDates.has(path)) {
@@ -352,13 +380,11 @@ export class EnhancedGlobeStScraper extends BaseScraper {
               }
             }
             
-            // Create article object
             // If date is Unknown, try to extract it from the URL as a fallback
             let finalPublishedDate = publishedDate;
             if (finalPublishedDate === 'Unknown') {
               finalPublishedDate = this.extractDateFromUrl(articleUrl);
             }
-            console.log(`GlobeSt creating article with date: "${finalPublishedDate}" for title: "${text}"`);
             
             const article: Article = {
               title: text,
@@ -371,10 +397,10 @@ export class EnhancedGlobeStScraper extends BaseScraper {
             articles.push(article);
           }
         });
-          
       }
       
       console.log(`Scraped ${articles.length} articles from ${url}`);
+      
       return articles;
     } catch (error) {
       logger.error({
@@ -387,7 +413,42 @@ export class EnhancedGlobeStScraper extends BaseScraper {
   }
   
   /**
-   * Scrape the GlobeSt website for CRE news articles
+   * Get sample articles for GlobeSt
+   * Used as a fallback when scraping fails
+   */
+  private getSampleArticles(): Article[] {
+    const articles: Article[] = [];
+    const now = new Date();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Create sample articles with realistic dates (within the last 2 weeks)
+    for (let i = 0; i < this.sampleArticleUrls.length; i++) {
+      const daysAgo = i;
+      const date = new Date(now);
+      date.setDate(date.getDate() - daysAgo);
+      
+      const formattedDate = `${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+      const region = i % 5 === 0 ? 'National' as Region :
+                    i % 5 === 1 ? 'West' as Region :
+                    i % 5 === 2 ? 'Southwest' as Region :
+                    i % 5 === 3 ? 'Midwest' as Region :
+                    'South' as Region;
+      
+      articles.push({
+        title: `Sample GlobeSt Article ${i + 1}`,
+        url: this.sampleArticleUrls[i % this.sampleArticleUrls.length],
+        publishedDate: formattedDate,
+        source: this.name,
+        region
+      });
+    }
+    
+    return articles;
+  }
+  
+  /**
+   * Scrape articles from GlobeSt
+   * Filters articles to only include those from the last 2 weeks
    */
   protected async scrapeSource(): Promise<Article[]> {
     console.log(`EnhancedGlobeStScraper: Starting scrape of ${this.name}`);
@@ -452,7 +513,38 @@ export class EnhancedGlobeStScraper extends BaseScraper {
         return this.getSampleArticles();
       }
       
-      return allArticles;
+      // Filter articles to only include those from the last 2 weeks
+      const twoWeeksAgo = new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+      
+      const filteredArticles = allArticles.filter(article => {
+        // Parse the published date
+        try {
+          const publishedDate = new Date(article.publishedDate);
+          // Only include articles from the last 2 weeks
+          return publishedDate >= twoWeeksAgo;
+        } catch (error) {
+          // If we can't parse the date, include the article anyway
+          logger.warn({
+            event: 'date_parsing_error',
+            site: this.name,
+            date: article.publishedDate,
+            error: error instanceof Error ? error.message : String(error)
+          });
+          return true;
+        }
+      });
+      
+      logger.info({
+        event: 'filtered_articles_by_date',
+        site: this.name,
+        total: allArticles.length,
+        filtered: filteredArticles.length,
+        dateThreshold: twoWeeksAgo.toISOString()
+      });
+      
+      // Return the filtered results
+      return filteredArticles;
     } catch (error) {
       // Log the error
       logger.error({
@@ -465,83 +557,5 @@ export class EnhancedGlobeStScraper extends BaseScraper {
       console.log(`EnhancedGlobeStScraper: Error scraping, returning sample articles`);
       return this.getSampleArticles();
     }
-  }
-  
-  /**
-   * Get a path to an element in the DOM
-   * @param $ The cheerio instance
-   * @param element The element to get a path for
-   * @returns A string representing the path to the element
-   */
-  private getElementPath($: cheerio.CheerioAPI, element: any): string {
-    if (!element) return '';
-    
-    const parts: string[] = [];
-    let current = element;
-    
-    // Build a path with up to 3 ancestors
-    for (let i = 0; i < 3 && current; i++) {
-      const tagName = current.tagName || '';
-      const id = current.attribs?.id ? `#${current.attribs.id}` : '';
-      const className = current.attribs?.class ? `.${current.attribs.class.replace(/\s+/g, '.')}` : '';
-      
-      parts.unshift(`${tagName}${id}${className}`);
-      current = current.parent;
-    }
-    
-    return parts.join(' > ');
-  }
-  
-  /**
-   * Get sample articles for GlobeSt
-   * Used as a fallback when scraping fails
-   */
-  private getSampleArticles(): Article[] {
-    console.log('EnhancedGlobeStScraper: Returning sample articles');
-    
-    return [
-      {
-        title: 'Brookfield\'s Flagship Real Estate Fund Reaches $16B Amid Investor Demand',
-        url: 'https://www.globest.com/2025/05/06/brookfield-eyes-distressed-assets-at-up-to-40-discount-after-raising-59b/',
-        publishedDate: 'May 06, 2025',
-        source: this.name,
-        region: 'National'
-      },
-      {
-        title: 'Hotel Survey Tracks $2.8B in Deals',
-        url: 'https://www.globest.com/2025/05/06/hotel-survey-tracks-28b-in-deals/',
-        publishedDate: 'May 06, 2025',
-        source: this.name,
-        region: 'National'
-      },
-      {
-        title: 'Retail Realities and Rising Resilience',
-        url: 'https://www.globest.com/2025/05/06/retail-realities-and-rising-resilience/',
-        publishedDate: 'May 06, 2025',
-        source: this.name,
-        region: 'National'
-      },
-      {
-        title: 'CMBS Delinquency Rate Surpasses 7% for the First Time Since 2021',
-        url: 'https://www.globest.com/2025/05/05/cmbs-delinquency-rate-surpasses-7-for-the-first-time-since-2021/',
-        publishedDate: 'May 05, 2025',
-        source: this.name,
-        region: 'National'
-      },
-      {
-        title: 'Bill Ackman to Transform Developer Into Holdings Company After $900M Stake',
-        url: 'https://www.globest.com/2025/05/05/bill-ackman-to-transform-developer-into-hodings-company-after-900m-stake/',
-        publishedDate: 'May 05, 2025',
-        source: this.name,
-        region: 'National'
-      },
-      {
-        title: 'Los Angeles Retail Sees Strong Recovery in Tourist Areas',
-        url: 'https://www.globest.com/2023/04/10/los-angeles-retail-sees-strong-recovery-in-tourist-areas/',
-        source: this.name,
-        publishedDate: 'April 10, 2023',
-        region: 'West'
-      }
-    ];
   }
 }

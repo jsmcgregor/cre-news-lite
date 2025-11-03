@@ -8,10 +8,10 @@ interface SimplifiedRegionSelectorProps {
 }
 
 // List of major regions to include in the dropdown
-const majorRegions = ['National', 'West', 'Southwest', 'Midwest', 'South', 'Northeast'];
+const majorRegions = ['All', 'National', 'West', 'Southwest', 'Midwest', 'South', 'Northeast'];
 
-// Default to National if no region is selected
-const DEFAULT_REGION = 'National';
+// Default to All if no region is selected
+const DEFAULT_REGION = 'All';
 
 export default function SimplifiedRegionSelector({ selectedRegion, onRegionChange }: SimplifiedRegionSelectorProps) {
     // Ensure we always have a valid region selected

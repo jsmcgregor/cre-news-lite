@@ -26,9 +26,11 @@ export interface RegionGroup {
 }
 
 export interface Article {
-    title: string;
-    url: string;
-    publishedDate: string;
-    source: string;
-    region: Region;
+  title: string;
+  url: string;
+  source: string;
+  publishedDate: string;
+  region: Region;
+  summary?: string;
+  imageUrl?: string;
 }

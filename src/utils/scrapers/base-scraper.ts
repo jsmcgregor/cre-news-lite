@@ -6,6 +6,7 @@ import { withMonitoring } from '../monitoring';
 import CONFIG from '../../config';
 import { mockArticles } from '../../mocks/articles';
 import { detectRegion } from '../regions';
+import apiTracker from '../apiTracker';
 
 /**
  * Base class for all scrapers
@@ -43,6 +44,9 @@ export abstract class BaseScraper {
     const cacheKey = `scraper:${this.name}:articles`;
     
     try {
+      // Track this API request
+      apiTracker.trackRequest(this.name);
+      
       // Use the cache wrapper with monitoring
       const articles = await withCache(cacheKey, async () => {
         // Add monitoring wrapper around the scraping process
@@ -62,6 +66,8 @@ export abstract class BaseScraper {
             return scrapedArticles;
           } catch (error) {
             console.error(`BaseScraper(${this.name}): Error in scrapeSource:`, error);
+            // Track API error
+            apiTracker.trackError(this.name);
             throw error;
           }
         });
@@ -71,6 +77,8 @@ export abstract class BaseScraper {
       return articles;
     } catch (error) {
       console.error(`BaseScraper(${this.name}): Error in getArticles:`, error);
+      // Track API error
+      apiTracker.trackError(this.name);
       return [];
     }
   }

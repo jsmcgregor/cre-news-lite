@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // Configure this route for static export
+// This must be force-static for compatibility with static exports
 export const dynamic = 'force-static';
 // This will make the route work with static export
 import { Article } from '../../../../types/article';
@@ -46,8 +47,28 @@ async function getArticlesFromSource(params: ArticleParams = {}): Promise<{
       allArticles = [...mockArticles];
     } else {
       // Get articles from all enabled scrapers
-      logger.info({ event: 'using_real_scrapers' });
-      allArticles = await getAllArticles();
+      logger.info({ 
+        event: 'using_real_scrapers',
+        enabledSources: CONFIG.ENABLE_SOURCES,
+        useMockData: CONFIG.USE_MOCK_DATA
+      });
+      
+      try {
+        allArticles = await getAllArticles();
+        logger.info({ 
+          event: 'articles_fetched', 
+          count: allArticles.length,
+          sources: allArticles.map(a => a.source).filter((v, i, a) => a.indexOf(v) === i)
+        });
+      } catch (error) {
+        logger.error({ 
+          event: 'error_fetching_articles', 
+          error: error instanceof Error ? error.message : String(error)
+        });
+        // Fallback to mock data if real scraping fails
+        allArticles = [...mockArticles];
+        logger.info({ event: 'falling_back_to_mock_data', count: allArticles.length });
+      }
       
       // Fix for GlobeSt articles with "Unknown" dates
       // This is a temporary fix until the caching issue is resolved

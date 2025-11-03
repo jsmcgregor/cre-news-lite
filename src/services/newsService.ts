@@ -5,6 +5,7 @@ export type ArticleParams = {
   pageSize?: number;
   region?: string;
   source?: string;
+  searchTerm?: string;
   useMockData?: boolean;
 };
 
@@ -40,6 +41,7 @@ class NewsService {
       if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
       if (params.region && params.region !== 'All') queryParams.append('region', params.region);
       if (params.source) queryParams.append('source', params.source);
+      if (params.searchTerm) queryParams.append('searchTerm', params.searchTerm);
       
       const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
       const url = `${this.baseUrl}${queryString}`;
